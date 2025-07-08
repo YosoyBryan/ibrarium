@@ -26,8 +26,10 @@ Ultra-cost-effective home automation solution: transform any Raspberry Pi into a
 
 ## About
 
-IBRARIUM is an ultra-affordable, open smart home solution for makers and hackers.  
+IBRARIUM is an ultra-affordable, open smart home solution for makers and hackers.
 Control everything in your home via Telegram, with no cloud dependency or vendor lock-in.
+
+Forget the command line CLI : IBRARIUM is made for everyone. No more complicated setup: just use Telegram to control your home.
 
 ## Features
 
@@ -114,8 +116,10 @@ Solution domotique ultra-économique : transformez n’importe quel Raspberry 
 
 ## À propos
 
-IBRARIUM est une solution domotique ouverte et ultra-abordable pour makers et bidouilleurs.  
+IBRARIUM est une solution domotique ouverte et ultra-abordable pour makers et bidouilleurs.
 Contrôlez tout chez vous via Telegram, sans cloud ni verrouillage propriétaire.
+
+Oubliez la ligne de commande  CLI : IBRARIUM est fait pour tous. Plus besoin de configurations compliquées, contrôlez tout simplement votre maison via Telegram.
 
 ## Fonctionnalités
 

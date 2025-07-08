@@ -1,8 +1,3 @@
-Certainly! Here is a clear, step-by-step English version of the IBRARIUM installation tutorial, designed specifically for non-coders, with simple language and no technical jargon:
-
-
----
-
 IBRARIUM Tutorial: Install Your Home Automation System (No Coding Needed)
 
 

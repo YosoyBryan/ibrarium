@@ -1,3 +1,7 @@
 pyTelegramBotAPI
 gpiozero
 playwright
+tinytuya
+python-kasa
+RPi.GPIO
+lirc

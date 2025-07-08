@@ -1,431 +1,214 @@
 #!/usr/bin/env python3
-"""
-IBRARIUM - Intelligent Home Automation System
-Created by James and GMN
-Optimized version with error handling, logging, and enhanced security
-"""
-
-import telebot
-import subprocess
-import os
-import sys
+import asyncio
 import logging
+import os
 import json
-import time
-from datetime import datetime
-from typing import Dict, List, Optional, Callable
-from dataclasses import dataclass
-from pathlib import Path
-from dotenv import load_dotenv
-import threading
-import queue
+import sys
+from telebot.async_telebot import AsyncTeleBot
+from telebot import types
 
-# Load environment variables
-load_dotenv()
+# Dynamically import custom modules from 'scripts' directory
+sys.path.append(os.path.join(os.path.dirname(__file__), 'scripts'))
 
-# Configuration
-@dataclass
-class Config:
-    """Centralized configuration for IBRARIUM"""
-    TELEGRAM_BOT_TOKEN: str = os.getenv('TELEGRAM_BOT_TOKEN', '')
-    AUTHORIZED_USER_IDS: List[int] = [int(x) for x in os.getenv('AUTHORIZED_USER_IDS', '').split(',') if x]
-    SCRIPTS_ACTION_PATH: str = os.getenv('SCRIPTS_ACTION_PATH', '/home/pi/ibrarium/scripts/')
-    LOG_LEVEL: str = os.getenv('LOG_LEVEL', 'INFO')
-    LOG_FILE: str = os.getenv('LOG_FILE', '/var/log/ibrarium.log')
-    MAX_RETRY_ATTEMPTS: int = int(os.getenv('MAX_RETRY_ATTEMPTS', '3'))
-    COMMAND_TIMEOUT: int = int(os.getenv('COMMAND_TIMEOUT', '30'))
-    RATE_LIMIT: int = int(os.getenv('RATE_LIMIT', '10'))  # Commands per minute
+# --- Try to import Wi-Fi Plug Control Module ---
+try:
+    from ibrarium_wifi_plug_generic import WifiPlugGenericControl
+    logging.info("Successfully imported WifiPlugGenericControl.")
+except ImportError as e:
+    logging.error(f"Failed to import WifiPlugGenericControl: {e}. Wi-Fi control features will be unavailable.")
+    WifiPlugGenericControl = None
 
-# Global configuration
-config = Config()
+# --- Load Configuration File ---
+CONFIG_FILE = 'ibrarium_config.json'
+CONFIG = {}
 
-# Logging configuration
-logging.basicConfig(
-    level=getattr(logging, config.LOG_LEVEL),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(config.LOG_FILE),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
-logger = logging.getLogger('IBRARIUM')
-
-# Configuration validation
-def validate_config() -> bool:
-    """Validates configuration at startup"""
-    if not config.TELEGRAM_BOT_TOKEN:
-        logger.error("TELEGRAM_BOT_TOKEN missing in environment variables")
-        return False
-    
-    if not config.AUTHORIZED_USER_IDS:
-        logger.error("AUTHORIZED_USER_IDS missing in environment variables")
-        return False
-    
-    if not Path(config.SCRIPTS_ACTION_PATH).exists():
-        logger.error(f"Scripts directory {config.SCRIPTS_ACTION_PATH} does not exist")
-        return False
-    
-    return True
-
-# Rate limiting manager
-class RateLimiter:
-    """Rate limiting manager to prevent spam"""
-    
-    def __init__(self, max_requests: int = 10, window_seconds: int = 60):
-        self.max_requests = max_requests
-        self.window_seconds = window_seconds
-        self.requests: Dict[int, List[float]] = {}
-    
-    def is_allowed(self, user_id: int) -> bool:
-        """Checks if user can make a request"""
-        now = time.time()
-        
-        if user_id not in self.requests:
-            self.requests[user_id] = []
-        
-        # Clean old requests
-        self.requests[user_id] = [
-            req_time for req_time in self.requests[user_id]
-            if now - req_time < self.window_seconds
-        ]
-        
-        if len(self.requests[user_id]) >= self.max_requests:
-            return False
-        
-        self.requests[user_id].append(now)
-        return True
-
-# Command manager
-@dataclass
-class Command:
-    """Represents an IBRARIUM command"""
-    keywords: List[str]
-    script: str
-    description: str
-    category: str
-    requires_args: bool = False
-    timeout: int = 30
-
-class CommandManager:
-    """Centralized command manager"""
-    
-    def __init__(self):
-        self.commands: Dict[str, Command] = {}
-        self.command_history: List[Dict] = []
-        self.setup_commands()
-    
-    def setup_commands(self):
-        """Sets up all available commands"""
-        commands_config = [
-            Command(
-                keywords=['clim', 'chauffage', 'climatisation', 'temperature'],
-                script='ibrarium_ir_control.py',
-                description='Contrôle de la climatisation et du chauffage',
-                category='climat'
-            ),
-            Command(
-                keywords=['arrose', 'arrosage', 'plante', 'jardin'],
-                script='ibrarium_plant_watering.py',
-                description='Système d\'arrosage intelligent',
-                category='jardin'
-            ),
-            Command(
-                keywords=['tv', 'television', 'media', 'chaine', 'volume'],
-                script='ibrarium_ir_control.py',
-                description='Contrôle des appareils média',
-                category='media'
-            ),
-            Command(
-                keywords=['garage', 'portail', 'porte'],
-                script='ibrarium_gpio_control.py',
-                description='Contrôle des accès (garage, portail)',
-                category='acces'
-            ),
-            Command(
-                keywords=['lampe', 'lumiere', 'eclairage', 'led'],
-                script='ibrarium_gpio_control.py',
-                description='Contrôle de l\'éclairage',
-                category='eclairage'
-            ),
-            Command(
-                keywords=['cafe', 'café', 'cafetiere'],
-                script='ibrarium_playwright_action.py',
-                description='Contrôle de la cafetière',
-                category='cuisine'
-            ),
-            Command(
-                keywords=['lave-linge', 'machine', 'laver', 'lessive'],
-                script='ibrarium_playwright_action.py',
-                description='Contrôle du lave-linge',
-                category='electromenager'
-            ),
-            Command(
-                keywords=['github', 'depot', 'repo'],
-                script='ibrarium_github_action.py',
-                description='Gestion des dépôts GitHub',
-                category='dev',
-                requires_args=True
-            ),
-            Command(
-                keywords=['status', 'statut', 'etat'],
-                script='ibrarium_system_status.py',
-                description='Statut du système IBRARIUM',
-                category='system'
-            ),
-            Command(
-                keywords=['help', 'aide', 'commandes'],
-                script='internal_help',
-                description='Affiche l\'aide',
-                category='system'
-            )
-        ]
-        
-        for cmd in commands_config:
-            for keyword in cmd.keywords:
-                self.commands[keyword] = cmd
-    
-    def find_command(self, text: str) -> Optional[Command]:
-        """Finds a command based on text"""
-        text_lower = text.lower().strip()
-        
-        # Exact search first
-        for keyword, command in self.commands.items():
-            if keyword in text_lower:
-                return command
-        
-        return None
-    
-    def log_command(self, user_id: int, command: str, status: str, details: str = ""):
-        """Logs command history"""
-        entry = {
-            'timestamp': datetime.now().isoformat(),
-            'user_id': user_id,
-            'command': command,
-            'status': status,
-            'details': details
-        }
-        self.command_history.append(entry)
-        
-        # Limit history to 1000 entries
-        if len(self.command_history) > 1000:
-            self.command_history = self.command_history[-1000:]
-
-class ScriptExecutor:
-    """Script executor with error handling and timeout"""
-    
-    def __init__(self, scripts_path: str):
-        self.scripts_path = Path(scripts_path)
-        self.execution_queue = queue.Queue()
-        self.worker_thread = threading.Thread(target=self._worker, daemon=True)
-        self.worker_thread.start()
-    
-    def _worker(self):
-        """Worker thread for script execution"""
-        while True:
-            try:
-                task = self.execution_queue.get(timeout=1)
-                if task is None:
-                    break
-                self._execute_task(task)
-            except queue.Empty:
-                continue
-            except Exception as e:
-                logger.error(f"Error in worker thread: {e}")
-    
-    def _execute_task(self, task: Dict):
-        """Executes a script task"""
-        script_path = self.scripts_path / task['script']
-        command = task['command']
-        callback = task['callback']
-        timeout = task.get('timeout', config.COMMAND_TIMEOUT)
-        
-        try:
-            if not script_path.exists():
-                callback(False, f"Script {task['script']} introuvable")
-                return
-            
-            # Command preparation
-            cmd = ['python3', str(script_path), command]
-            
-            # Execution with timeout
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                cwd=str(self.scripts_path)
-            )
-            
-            try:
-                stdout, stderr = process.communicate(timeout=timeout)
-                
-                if process.returncode == 0:
-                    callback(True, stdout.strip() if stdout else "Commande exécutée avec succès")
-                else:
-                    callback(False, f"Erreur d'exécution: {stderr.strip()}")
-                    
-            except subprocess.TimeoutExpired:
-                process.kill()
-                callback(False, f"Timeout après {timeout} secondes")
-                
-        except Exception as e:
-            callback(False, f"Erreur d'exécution: {str(e)}")
-    
-    def execute_script(self, script: str, command: str, callback: Callable, timeout: int = None):
-        """Adds a script to the execution queue"""
-        task = {
-            'script': script,
-            'command': command,
-            'callback': callback,
-            'timeout': timeout or config.COMMAND_TIMEOUT
-        }
-        self.execution_queue.put(task)
-
-class IbrariumBot:
-    """Main IBRARIUM bot class"""
-    
-    def __init__(self):
-        if not validate_config():
-            sys.exit(1)
-        
-        self.bot = telebot.TeleBot(config.TELEGRAM_BOT_TOKEN)
-        self.command_manager = CommandManager()
-        self.script_executor = ScriptExecutor(config.SCRIPTS_ACTION_PATH)
-        self.rate_limiter = RateLimiter(config.RATE_LIMIT)
-        
-        # Handler registration
-        self.bot.message_handler(func=lambda message: True)(self.handle_message)
-        
-        logger.info("IBRARIUM initialized successfully")
-    
-    def is_authorized(self, user_id: int) -> bool:
-        """Checks if user is authorized"""
-        return user_id in config.AUTHORIZED_USER_IDS
-    
-    def handle_message(self, message):
-        """Main message handler"""
-        try:
-            # Authorization check
-            if not self.is_authorized(message.from_user.id):
-                logger.warning(f"Unauthorized access attempt from {message.from_user.id}")
-                self.bot.reply_to(message, "❌ Accès non autorisé à IBRARIUM.")
-                return
-            
-            # Rate limiting check
-            if not self.rate_limiter.is_allowed(message.from_user.id):
-                self.bot.reply_to(message, "⚠️ Trop de commandes. Veuillez patienter.")
-                return
-            
-            command_text = message.text.strip()
-            logger.info(f"Command received from {message.from_user.username}: '{command_text}'")
-            
-            # Help handling
-            if any(keyword in command_text.lower() for keyword in ['help', 'aide', 'commandes']):
-                self.send_help(message)
-                return
-            
-            # Command search
-            command = self.command_manager.find_command(command_text)
-            
-            if not command:
-                self.bot.reply_to(message, "❓ Commande non reconnue. Tapez 'aide' pour voir les commandes disponibles.")
-                self.command_manager.log_command(message.from_user.id, command_text, "NOT_FOUND")
-                return
-            
-            # Command execution
-            self.execute_command(message, command, command_text)
-            
-        except Exception as e:
-            logger.error(f"Error in handle_message: {e}")
-            self.bot.reply_to(message, "❌ Erreur interne du système.")
-    
-    def execute_command(self, message, command: Command, command_text: str):
-        """Executes a command"""
-        # Confirmation message
-        category_emoji = {
-            'climat': '🌡️',
-            'jardin': '🌱',
-            'media': '📺',
-            'acces': '🚪',
-            'eclairage': '💡',
-            'cuisine': '☕',
-            'electromenager': '🔌',
-            'dev': '💻',
-            'system': '⚙️'
-        }
-        
-        emoji = category_emoji.get(command.category, '🔧')
-        self.bot.reply_to(message, f"{emoji} IBRARIUM: {command.description}...")
-        
-        # Result callback
-        def execution_callback(success: bool, result: str):
-            if success:
-                self.bot.send_message(message.chat.id, f"✅ {result}")
-                self.command_manager.log_command(message.from_user.id, command_text, "SUCCESS", result)
-            else:
-                self.bot.send_message(message.chat.id, f"❌ {result}")
-                self.command_manager.log_command(message.from_user.id, command_text, "ERROR", result)
-        
-        # Script execution
-        self.script_executor.execute_script(
-            command.script,
-            command_text,
-            execution_callback,
-            command.timeout
-        )
-    
-    def send_help(self, message):
-        """Sends command help"""
-        help_text = "🏠 **IBRARIUM - Commandes Disponibles**\n\n"
-        
-        categories = {}
-        for cmd in set(self.command_manager.commands.values()):
-            if cmd.category not in categories:
-                categories[cmd.category] = []
-            categories[cmd.category].append(cmd)
-        
-        category_names = {
-            'climat': '🌡️ Climat',
-            'jardin': '🌱 Jardin',
-            'media': '📺 Média',
-            'acces': '🚪 Accès',
-            'eclairage': '💡 Éclairage',
-            'cuisine': '☕ Cuisine',
-            'electromenager': '🔌 Électroménager',
-            'dev': '💻 Développement',
-            'system': '⚙️ Système'
-        }
-        
-        for category, commands in categories.items():
-            help_text += f"**{category_names.get(category, category.title())}**\n"
-            for cmd in commands:
-                keywords = ', '.join(cmd.keywords[:3])  # Limit to 3 keywords
-                help_text += f"• {keywords}: {cmd.description}\n"
-            help_text += "\n"
-        
-        help_text += "📝 Tapez simplement un mot-clé pour déclencher une action."
-        
-        self.bot.reply_to(message, help_text, parse_mode='Markdown')
-    
-    def run(self):
-        """Runs the bot"""
-        try:
-            logger.info("🚀 IBRARIUM BY JAMES AND GMN est en écoute des commandes Telegram...")
-            self.bot.polling(none_stop=True, interval=1, timeout=20)
-        except KeyboardInterrupt:
-            logger.info("Bot shutdown requested by user")
-        except Exception as e:
-            logger.error(f"Critical error: {e}")
-            sys.exit(1)
-
-def main():
-    """Main entry point"""
+def load_config():
+    """Load JSON configuration from disk."""
+    global CONFIG
+    if not os.path.exists(CONFIG_FILE):
+        logging.error(f"Configuration file '{CONFIG_FILE}' not found. Please create it.")
+        sys.exit(1)
     try:
-        bot = IbrariumBot()
-        bot.run()
+        with open(CONFIG_FILE, 'r') as f:
+            CONFIG = json.load(f)
+        logging.info("Configuration loaded successfully.")
+    except json.JSONDecodeError as e:
+        logging.error(f"Error parsing configuration file '{CONFIG_FILE}': {e}")
+        sys.exit(1)
     except Exception as e:
-        logger.error(f"Startup error: {e}")
+        logging.error(f"Unexpected error loading configuration: {e}")
         sys.exit(1)
 
-if __name__ == "__main__":
-    main()
+load_config()
+
+# --- Configure Logging ---
+log_level_str = CONFIG.get('system_info', {}).get('log_level', 'INFO').upper()
+numeric_level = getattr(logging, log_level_str, None)
+if not isinstance(numeric_level, int):
+    raise ValueError(f'Invalid log level: {log_level_str}')
+
+log_file_path = CONFIG.get('system_info', {}).get('log_file', '/var/log/ibrarium.log')
+log_dir = os.path.dirname(log_file_path)
+
+handlers = []
+file_logging_enabled = False # Flag to track if file logging is successfully set up
+
+# Attempt to set up file handler
+if log_file_path: # Only try if a path is specified
+    if log_dir and not os.path.exists(log_dir):
+        try:
+            os.makedirs(log_dir, exist_ok=True)
+            handlers.append(logging.FileHandler(log_file_path))
+            file_logging_enabled = True
+            logging.info(f"Created log directory and set up file logging to: {log_file_path}") # Log this via stream handler
+        except OSError as e:
+            # If directory creation fails, log to console and disable file logging
+            logging.warning(f"Could not create log directory {log_dir}: {e}. File logging disabled.")
+    else: # Directory exists or log_file_path is just a filename (no explicit directory)
+        try:
+            handlers.append(logging.FileHandler(log_file_path))
+            file_logging_enabled = True
+            logging.info(f"Set up file logging to: {log_file_path}") # Log this via stream handler
+        except Exception as e:
+            # If file handler setup fails (e.g., permissions), log to console and disable file logging
+            logging.warning(f"Failed to set up file logging to {log_file_path}: {e}. File logging disabled.")
+
+# Always log to console
+handlers.append(logging.StreamHandler())
+
+logging.basicConfig(
+    level=numeric_level,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=handlers
+)
+
+logging.info(f"IBRARIUM System started with log level: {log_level_str}")
+if not file_logging_enabled and log_file_path: # Only warn if file logging was intended but failed
+    logging.warning("File logging is disabled. All logs will go to the console.")
+elif file_logging_enabled:
+    logging.info(f"Logs are being written to: {log_file_path}")
+
+
+# --- Telegram Bot Setup ---
+TELEGRAM_BOT_TOKEN = CONFIG.get('telegram_bot', {}).get('api_token')
+ALLOWED_USER_IDS = list(map(int, CONFIG.get('telegram_bot', {}).get('allowed_user_ids', [])))
+ADMIN_USER_IDS = list(map(int, CONFIG.get('telegram_bot', {}).get('admin_user_ids', [])))
+
+if not TELEGRAM_BOT_TOKEN or not ALLOWED_USER_IDS:
+    logging.error("Telegram bot token or allowed user IDs are not configured. Please check ibrarium_config.json.")
+    sys.exit(1)
+
+bot = AsyncTeleBot(TELEGRAM_BOT_TOKEN)
+
+# --- Global State: Initialize Device Controllers ---
+wifi_plug_controller = None
+if WifiPlugGenericControl:
+    try:
+        # Pass the full config to the controller, allowing it to read its specific sections
+        wifi_plug_controller = WifiPlugGenericControl(CONFIG_FILE)
+        logging.info("Wi-Fi Plug Generic Controller initialized.")
+    except Exception as e:
+        logging.error(f"Failed to initialize WifiPlugGenericControl: {e}. Wi-Fi commands will not work.")
+
+# --- Helper Functions for Permissions ---
+def is_allowed_user(message):
+    return message.from_user.id in ALLOWED_USER_IDS
+
+def is_admin_user(message):
+    return message.from_user.id in ADMIN_USER_IDS
+
+# --- Telegram Command Handlers ---
+
+@bot.message_handler(commands=['start', 'help'])
+async def send_welcome(message):
+    if not is_allowed_user(message):
+        await bot.reply_to(message, CONFIG.get('telegram_bot', {}).get('commands', {}).get('unauthorized', "You are not authorized."))
+        return
+
+    help_message = CONFIG.get('telegram_bot', {}).get('commands', {}).get('help',
+        "Available commands: /status, /wifi_list, /wifi_on <device>, /wifi_off <device>, /wifi_toggle <device>, /wifi_status <device>")
+    await bot.reply_to(message, help_message)
+
+@bot.message_handler(commands=['ping'])
+async def handle_ping(message):
+    """Health check command."""
+    if is_allowed_user(message):
+        await bot.reply_to(message, "pong 🟢")
+
+@bot.message_handler(commands=['status'])
+async def get_status(message):
+    if not is_allowed_user(message):
+        await bot.reply_to(message, CONFIG.get('telegram_bot', {}).get('commands', {}).get('unauthorized', "You are not authorized."))
+        return
+
+    status_text = "🛠️ IBRARIUM system is running.\n"
+    status_text += f"Version: {CONFIG.get('system_info', {}).get('version', 'N/A')}\n"
+    status_text += f"Timezone: {CONFIG.get('system_info', {}).get('timezone', 'N/A')}\n"
+    status_text += f"Log level: {CONFIG.get('system_info', {}).get('log_level', 'N/A')}\n"
+
+    if wifi_plug_controller:
+        status_text += "\nWi-Fi Plug Controller: ✅ Active\n"
+        devices_info = wifi_plug_controller.list_devices()
+        # wifi_plug_controller.list_devices() returns a string already, no need to join a list
+        status_text += devices_info
+    else:
+        status_text += "\nWi-Fi Plug Controller: ❌ Inactive (module not loaded or failed to initialize)\n"
+
+    await bot.reply_to(message, status_text)
+
+@bot.message_handler(commands=['wifi_list'])
+async def wifi_list_devices(message):
+    if not is_allowed_user(message):
+        await bot.reply_to(message, CONFIG.get('telegram_bot', {}).get('commands', {}).get('unauthorized', "You are not authorized."))
+        return
+
+    if wifi_plug_controller:
+        devices_info = wifi_plug_controller.list_devices()
+        # wifi_plug_controller.list_devices() returns a string already
+        if not devices_info.strip(): # Check if the string is empty or just whitespace
+            devices_info = "No Wi-Fi devices configured."
+        await bot.reply_to(message, f"Configured Wi-Fi devices:\n{devices_info}")
+    else:
+        await bot.reply_to(message, "Wi-Fi controller is not available. Please check the logs.")
+
+@bot.message_handler(commands=['wifi_on', 'wifi_off', 'wifi_toggle', 'wifi_status'])
+async def control_wifi_device(message):
+    if not is_allowed_user(message):
+        await bot.reply_to(message, CONFIG.get('telegram_bot', {}).get('commands', {}).get('unauthorized', "You are not authorized."))
+        return
+
+    if not wifi_plug_controller:
+        await bot.reply_to(message, "Wi-Fi controller is not available. Please check the logs.")
+        return
+
+    parts = message.text.split(maxsplit=2)
+    command = parts[0][1:]  # Remove leading '/'
+    if len(parts) < 2:
+        await bot.reply_to(message, f"Usage: /{command} <device_name>\nExample: /{command} coffee_machine")
+        return
+
+    device_name = parts[1].lower()
+    action = command.replace("wifi_", "")  # Extract action: on/off/toggle/status
+
+    logging.info(f"Received command /{command} for device: {device_name}, action: {action}")
+    try:
+        response = await wifi_plug_controller.control_device(device_name, action)
+        await bot.reply_to(message, response)
+    except Exception as e:
+        logging.error(f"Error handling device '{device_name}': {e}", exc_info=True) # exc_info for full traceback
+        await bot.reply_to(message, f"Failed to process command for device '{device_name}'. Error: {e}")
+
+# --- Main Bot Polling Loop ---
+async def main_loop():
+    logging.info("Starting Telegram bot polling...")
+    # The polling method blocks. Make sure any other async tasks are run separately
+    await bot.polling(non_stop=True, interval=0)
+
+if __name__ == '__main__':
+    try:
+        asyncio.run(main_loop())
+    except KeyboardInterrupt:
+        logging.info("Bot stopped by user (KeyboardInterrupt).")
+    except Exception as e:
+        logging.critical(f"An unhandled error occurred: {e}", exc_info=True) # exc_info for full traceback
+    

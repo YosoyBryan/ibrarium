@@ -297,7 +297,7 @@ if __name__ == "__main__":
                 print(f"IBRARIUM GARAGE: Horodatage: {status['timestamp']}")
                 if status['sensors_available']:
                     print(f"IBRARIUM GARAGE: Capteur ouvert: {'Activé' if status['open_sensor'] else 'Désactivé'}")
-                    print(f"IBRARIUM GARAGE: Capteur fermé: {'Activé' if status['closed_sensor'] else 'Désactiva'}")
+                    print(f"IBRARIUM GARAGE: Capteur fermé: {'Activé' if status['closed_sensor'] else 'Désactivé'}")
                 else:
                     print("IBRARIUM GARAGE: Capteurs de position non configurés.")
                 print(f"IBRARIUM GARAGE: Peut opérer: {'Oui' if status['can_operate'] else 'Non'}")

@@ -1,4 +1,5 @@
 Ce guide est fait pour vous, même si vous n'avez jamais écrit une ligne de code. Nous allons installer IBRARIUM, votre système domotique capable de contrôler des appareils via Wi-Fi, Infrarouge (IR) et les ports GPIO de votre Raspberry Pi.
+
 🚀 Étape 0 : Ce dont vous aurez besoin
  * Un ordinateur de contrôle : Idéalement, un Raspberry Pi (modèle 3B+, 4 ou 5 recommandé) avec une carte MicroSD de 16 Go minimum. Vous pouvez aussi utiliser un PC Linux.
  * Une alimentation pour votre Raspberry Pi.

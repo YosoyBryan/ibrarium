@@ -1,0 +1,290 @@
+{
+  "system_info": {
+    "name": "Home Automation System",
+    "version": "1.0.0",
+    "description": "Universal home automation configuration with multiple protocol support",
+    "timezone": "Europe/Paris",
+    "language": "en",
+    "check_interval_seconds": 300,
+    "log_level": "INFO",
+    "log_file": "/var/log/home_automation.log"
+  },
+  "telegram_bot": {
+    "enabled": true,
+    "api_token": "YOUR_TELEGRAM_BOT_API_TOKEN",
+    "webhook_url": null,
+    "allowed_user_ids": [
+      123456789,
+      987654321
+    ],
+    "admin_user_ids": [
+      123456789
+    ],
+    "rate_limit": {
+      "max_requests_per_minute": 30,
+      "timeout_seconds": 60
+    },
+    "commands": {
+      "start": "Welcome to Home Automation System",
+      "help": "Available commands: /status, /lights, /devices, /screenshot",
+      "unauthorized": "You are not authorized to use this bot"
+    }
+  },
+  "web_interface": {
+    "enabled": true,
+    "port": 5000,
+    "host": "0.0.0.0",
+    "ssl_enabled": false,
+    "ssl_cert_path": null,
+    "ssl_key_path": null,
+    "authentication": {
+      "enabled": true,
+      "username": "admin",
+      "password": "your_secure_password"
+    }
+  },
+  "security": {
+    "api_key": "your_api_key_here",
+    "encrypt_config": false,
+    "require_2fa": false,
+    "session_timeout_minutes": 30,
+    "max_failed_attempts": 3,
+    "lockout_duration_minutes": 15
+  },
+  "database": {
+    "type": "sqlite",
+    "path": "/var/lib/home_automation/database.db",
+    "backup_enabled": true,
+    "backup_interval_hours": 24,
+    "backup_retention_days": 7
+  },
+  "notifications": {
+    "email": {
+      "enabled": false,
+      "smtp_server": "smtp.gmail.com",
+      "smtp_port": 587,
+      "username": "your_email@gmail.com",
+      "password": "your_app_password",
+      "from_address": "your_email@gmail.com",
+      "recipients": ["recipient@example.com"]
+    },
+    "push_notifications": {
+      "enabled": false,
+      "service": "pushbullet",
+      "api_key": "your_pushbullet_api_key"
+    }
+  },
+  "screenshot": {
+    "enabled": true,
+    "output_dir": "/home/automation/screenshots",
+    "default_width": 1920,
+    "default_height": 1080,
+    "quality": 80,
+    "format": "png",
+    "cleanup_after_days": 7,
+    "max_screenshots": 100
+  },
+  "audio_playback": {
+    "enabled": true,
+    "default_volume": 70,
+    "output_device": "default",
+    "supported_formats": ["mp3", "wav", "ogg"],
+    "max_volume": 100,
+    "fade_duration": 2,
+    "notification_sounds": {
+      "success": "sounds/success.wav",
+      "error": "sounds/error.wav",
+      "warning": "sounds/warning.wav"
+    }
+  },
+  "github_integration": {
+    "enabled": false,
+    "username": "your_github_username",
+    "token": "your_github_personal_access_token",
+    "repository": "home-automation-config",
+    "branch": "main",
+    "auto_update": false,
+    "update_interval_hours": 24
+  },
+  "hardware": {
+    "platform": "raspberry_pi",
+    "gpio_control": {
+      "enabled": false,
+      "library": "RPi.GPIO",
+      "pin_mode": "BCM",
+      "cleanup_on_exit": true,
+      "pins": {
+        "relay_1": {
+          "pin": 2,
+          "name": "Living Room Light",
+          "type": "output",
+          "default_state": "low",
+          "inverted": false
+        },
+        "relay_2": {
+          "pin": 3,
+          "name": "Bedroom Fan",
+          "type": "output",
+          "default_state": "low",
+          "inverted": false
+        },
+        "sensor_1": {
+          "pin": 4,
+          "name": "Motion Sensor",
+          "type": "input",
+          "pull_up": true,
+          "debounce_time": 200
+        }
+      }
+    },
+    "garage_door": {
+      "enabled": false,
+      "name": "Main Garage Door",
+      "trigger_pin": 17,
+      "pulse_duration": 0.5,
+      "active_high_relay": false,
+      "sensors": {
+        "open_sensor_pin": null,
+        "closed_sensor_pin": null,
+        "sensor_pull_up": true,
+        "obstruction_sensor_pin": null
+      },
+      "safety": {
+        "enable_safety_checks": true,
+        "max_operation_time": 30,
+        "safety_timeout": 5,
+        "require_confirmation": true
+      }
+    }
+  },
+  "protocols": {
+    "wifi_devices": {
+      "discovery": {
+        "enabled": true,
+        "scan_interval_minutes": 60,
+        "network_range": "192.168.1.0/24"
+      },
+      "kasa_devices": {
+        "enabled": true,
+        "library": "python-kasa",
+        "devices": {
+          "coffee_machine": {
+            "type": "switch",
+            "ip_address": "192.168.1.100",
+            "friendly_name": "Coffee Machine",
+            "room": "Kitchen",
+            "icon": "coffee",
+            "auto_discovery": true
+          },
+          "living_room_lamp": {
+            "type": "dimmer",
+            "ip_address": "192.168.1.101",
+            "friendly_name": "Living Room Lamp",
+            "room": "Living Room",
+            "icon": "lightbulb",
+            "min_brightness": 1,
+            "max_brightness": 100
+          }
+        }
+      },
+      "tuya_devices": {
+        "enabled": true,
+        "library": "tinytuya",
+        "devices": {
+          "desk_lamp": {
+            "type": "dimmer",
+            "device_id": "YOUR_TUYA_DEVICE_ID",
+            "local_key": "YOUR_TUYA_LOCAL_KEY",
+            "ip_address": "192.168.1.102",
+            "friendly_name": "Desk Lamp",
+            "room": "Office",
+            "icon": "desk-lamp",
+            "color_support": true,
+            "color_temp_range": [2700, 6500]
+          }
+        }
+      },
+      "philips_hue": {
+        "enabled": false,
+        "bridge_ip": "192.168.1.50",
+        "username": "your_hue_username",
+        "auto_discovery": true
+      },
+      "mqtt": {
+        "enabled": false,
+        "broker": "192.168.1.50",
+        "port": 1883,
+        "username": "mqtt_user",
+        "password": "mqtt_password",
+        "topic_prefix": "home_automation",
+        "retain_messages": true
+      }
+    }
+  },
+  "automation": {
+    "enabled": true,
+    "rules": {
+      "example_rule": {
+        "name": "Morning Coffee",
+        "enabled": false,
+        "trigger": {
+          "type": "time",
+          "time": "07:00",
+          "days": ["monday", "tuesday", "wednesday", "thursday", "friday"]
+        },
+        "conditions": [
+          {
+            "type": "device_state",
+            "device": "coffee_machine",
+            "state": "off"
+          }
+        ],
+        "actions": [
+          {
+            "type": "device_control",
+            "device": "coffee_machine",
+            "action": "turn_on"
+          },
+          {
+            "type": "notification",
+            "message": "Coffee machine started"
+          }
+        ]
+      }
+    }
+  },
+  "monitoring": {
+    "system_health": {
+      "enabled": true,
+      "check_interval_seconds": 60,
+      "metrics": {
+        "cpu_usage": true,
+        "memory_usage": true,
+        "disk_usage": true,
+        "network_status": true,
+        "temperature": true
+      }
+    },
+    "device_health": {
+      "enabled": true,
+      "check_interval_seconds": 300,
+      "timeout_seconds": 10,
+      "retry_attempts": 3
+    }
+  },
+  "backup": {
+    "enabled": true,
+    "schedule": "0 2 * * *",
+    "backup_location": "/backup/home_automation",
+    "include_logs": false,
+    "compress": true,
+    "encryption": false
+  },
+  "development": {
+    "debug_mode": false,
+    "test_mode": false,
+    "mock_devices": false,
+    "api_documentation": true,
+    "websocket_port": 5001
+  }
+}

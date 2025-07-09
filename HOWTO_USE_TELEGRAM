@@ -1,0 +1,60 @@
+
+*en Français plus bas*
+
+English
+
+### Overview
+
+This guide explains how to use the general-purpose Telegram bot `telegram_bot_general.py`, which automatically detects and schedules any available Ibrarium script without needing to modify the bot code.
+
+### Key Features
+
+* Autodetection of all `ibrarium_*.py` scripts
+* Execution on demand
+* Delay in minutes
+* Scheduled execution by hour
+
+### Usage
+
+Once the bot is running:
+
+* Type `coffee` to run `ibrarium_coffee.py`
+* Type `coffee 5` to run it in 5 minutes
+* Type `coffee at 7:45` to schedule it
+
+### Benefits
+
+* No need to hardcode commands
+* Easily extensible (just add new `ibrarium_*.py` scripts)
+* Works for both low-code and no-code users
+  \* the name of the script
+
+---
+
+## Français
+
+### Vue d'ensemble
+
+Ce guide explique comment utiliser le bot Telegram généraliste `telegram_bot_general.py`, qui détecte automatiquement et planifie l'exécution de tous les scripts Ibrarium disponibles, sans modification du code du bot.
+
+### Fonctionnalités principales
+
+* Détection automatique de tous les scripts `ibrarium_*.py`
+* Exécution immédiate
+* Délai en minutes
+* Planification par heure/jour
+
+### Utilisation
+
+Une fois le bot lancé :
+
+* Tapez `coffee` pour exécuter `ibrarium_coffee.py`
+* Tapez `coffee 5` pour l'exécuter dans 5 minutes
+* Tapez `coffee at 7:45` pour le programmer
+
+### Avantages
+
+* Aucune configuration supplémentaire
+* Extensible facilement (ajoutez simplement un nouveau script `ibrarium_*.py`)
+* Parfait pour les développeurs no-code / low-code
+* \* correspond au nom du script

